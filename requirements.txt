@@ -1,0 +1,10 @@
+tqdm
+matplotlib
+PyQt6
+graphviz
+IPython
+torchviz
+torchview
+pandas
+numpy
+scikit-learn
