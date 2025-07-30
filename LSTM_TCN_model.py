@@ -11,7 +11,6 @@ import torch.optim as optim
 
 class LSTM_TCN_fcn_1room:
     def run(self,suffix, inputFileName, genco2r1FileName, genoccr1FileName):
-        # suffix = inputFileName[:-4]
         # Configuration
         modelVersion = 'LSTM_AE_TCN_1room'
         continueTrain = False
@@ -20,10 +19,8 @@ class LSTM_TCN_fcn_1room:
         seq_len = 21
         feature_dim = 1
         latent_dim = 256  # size of compressed vector
-
-        # -----------------------------
+        
         # Define the LSTM Autoencoder
-        # -----------------------------
         class LSTMTCNAutoencoder(nn.Module):
             def __init__(self, input_dim, latent_dim, seq_len, num_classes):
                 super(LSTMTCNAutoencoder, self).__init__()
@@ -116,28 +113,19 @@ class LSTM_TCN_fcn_1room:
         # % LOAD EXTRA GEN DATA
         r1co2Gen = genfromtxt(genco2r1FileName, delimiter=',',
                               skip_header=False)
-        # r2co2Gen = genfromtxt(genco2r2FileName, delimiter=',',
-        #                       skip_header=False)
 
         r1occGen = genfromtxt(genoccr1FileName, delimiter=',',
                               skip_header=False)
-        # r2occGen = genfromtxt(genoccr2FileName, delimiter=',',
-        #                       skip_header=False)
 
         counter = 0
         imgBatchesRawGen = numpy.zeros((r1co2Gen.shape[0] - seq_len, seq_len, feature_dim))
         rawDataCO21gen = []
-        # rawDataCO22gen = []
         rawDataOcc1gen = []
-        # rawDataOcc2gen = []
         for i in range((int)((seq_len - 1) / 2), r1co2Gen.shape[0] - ((int)((seq_len - 1) / 2)) - 1):
             for j in range(-((int)((seq_len - 1) / 2)), (int)((seq_len - 1) / 2)):
                 imgBatchesRawGen[counter, j + (int)((seq_len - 1) / 2), 0] = r1co2Gen[i + j]
-                # imgBatchesRawGen[counter, j + (int)((seq_len - 1) / 2), 1] = r2co2Gen[i + j]
             rawDataCO21gen.append(imgBatchesRawGen[counter, (int)((seq_len - 1) / 2), 0])
-            # rawDataCO22gen.append(imgBatchesRawGen[counter, (int)((seq_len - 1) / 2), 1])
             rawDataOcc1gen.append(r1occGen[i])
-            # rawDataOcc2gen.append(r2occGen[i])
             counter = counter + 1
 
         numInstances = counter
@@ -148,18 +136,9 @@ class LSTM_TCN_fcn_1room:
 
         counter = 0
         imgBatchesRawGenTCN = numpy.zeros((r1co2Gen.shape[0] - seq_len, feature_dim, seq_len))
-        # rawDataCO21gen = []
-        # rawDataCO22gen = []
-        # rawDataOcc1gen = []
-        # rawDataOcc2gen = []
         for i in range((int)((seq_len - 1) / 2), r1co2Gen.shape[0] - ((int)((seq_len - 1) / 2)) - 1):
             for j in range(-((int)((seq_len - 1) / 2)), (int)((seq_len - 1) / 2)):
                 imgBatchesRawGenTCN[counter, 0, j + (int)((seq_len - 1) / 2)] = r1co2Gen[i + j]
-                # imgBatchesRawGenTCN[counter, 1, j + (int)((seq_len - 1) / 2)] = r2co2Gen[i + j]
-            # rawDataCO21gen.append(imgBatchesRawGenTCN[counter, 0, (int)((seq_len - 1) / 2)])
-            # rawDataCO22gen.append(imgBatchesRawGenTCN[counter, 1, (int)((seq_len - 1) / 2)])
-            # rawDataOcc1gen.append(r1occGen[i])
-            # rawDataOcc2gen.append(r2occGen[i])
             counter = counter + 1
 
         numInstances = counter
@@ -174,9 +153,7 @@ class LSTM_TCN_fcn_1room:
         counter = 0
         imgBatchesRawTest = numpy.zeros((my_data.shape[0] - seq_len, seq_len, feature_dim))  # imgWidth,2,1);
         rawDataCO21Test = []
-        # rawDataCO22Test = []
         rawDataOcc1Test = []
-        # rawDataOcc2Test = []
         for i in range((int)((seq_len - 1) / 2), my_data.shape[0] - ((int)((seq_len - 1) / 2)) - 1):
             for j in range(-((int)((seq_len - 1) / 2)), (int)((seq_len - 1) / 2)):
                 imgBatchesRawTest[counter, j + (int)((seq_len - 1) / 2), 0] = my_data[i + j, 3]
@@ -189,26 +166,15 @@ class LSTM_TCN_fcn_1room:
 
         counter = 0
         imgBatchesRawTestTCN = numpy.zeros((my_data.shape[0] - seq_len, feature_dim, seq_len))  # imgWidth,2,1);
-        # rawDataCO21Test = []
-        # rawDataCO22Test = []
-        # rawDataOcc1Test = []
-        # rawDataOcc2Test = []
         for i in range((int)((seq_len - 1) / 2), my_data.shape[0] - ((int)((seq_len - 1) / 2)) - 1):
             for j in range(-((int)((seq_len - 1) / 2)), (int)((seq_len - 1) / 2)):
                 imgBatchesRawTestTCN[counter, 0, j + (int)((seq_len - 1) / 2)] = my_data[i + j, 3]
-                # imgBatchesRawTestTCN[counter, 1, j + (int)((seq_len - 1) / 2)] = my_data[i + j, 4]
-            # rawDataCO21Test.append(imgBatchesRawTest[counter, (int)((seq_len - 1) / 2), 0])
-            # rawDataCO22Test.append(imgBatchesRawTest[counter, (int)((seq_len - 1) / 2), 1])
-            # rawDataOcc1Test.append(my_data[i, 0])
-            # rawDataOcc2Test.append(my_data[i, 1])
             counter = counter + 1
 
 
         labelsTest = numpy.array(rawDataOcc1Test, dtype=numpy.int32)
         labelsTest[labelsTest > 2] = 2
-        # torchLabels = torch.from_numpy(labels).to(torch.int64)
-        # labelsOneHot = nn.functional.one_hot(torchLabels,3).to(torch.float32)
-        # labelsOneHot = labelsOneHot.detach().cpu().numpy()
+
         encoded_arrTest = numpy.zeros((labelsTest.size, labelsTest.max() + 1), dtype=int)
         encoded_arrTest[numpy.arange(labelsTest.size), labelsTest] = 1
         labelsOneHotTest = encoded_arrTest
@@ -217,16 +183,13 @@ class LSTM_TCN_fcn_1room:
 
         # Create dummy input
         x = torch.from_numpy(genImgTrain).to(dtype=torch.float32)
-        # x = torch.randn(batch_size, seq_len, feature_dim)  # (batch, seq_len, input_dim)
 
         # Create model
         model = LSTMTCNAutoencoder(input_dim=feature_dim, latent_dim=latent_dim, seq_len=seq_len, num_classes=3)
 
         labels = numpy.array(rawDataOcc1gen, dtype=numpy.int32)
         labels[labels > 2] = 2
-        # torchLabels = torch.from_numpy(labels).to(torch.int64)
-        # labelsOneHot = nn.functional.one_hot(torchLabels,3).to(torch.float32)
-        # labelsOneHot = labelsOneHot.detach().cpu().numpy()
+        
         encoded_arr = numpy.zeros((labels.size, labels.max() + 1), dtype=int)
         encoded_arr[numpy.arange(labels.size), labels] = 1
         labelsOneHot = encoded_arr
@@ -245,8 +208,6 @@ class LSTM_TCN_fcn_1room:
         criterion = nn.MSELoss()
         optimizer = optim.Adam(model.parameters(), lr=0.0001)
 
-        # Training loop (1 epoch example)
-        # model.train()
         indices = numpy.arange(genImgTrain.shape[0])
         counter = 1
         scheduler = lr_scheduler.StepLR(optimizer, step_size=50, gamma=0.992)
@@ -255,11 +216,8 @@ class LSTM_TCN_fcn_1room:
             batchSampledX = torch.from_numpy(genImgTrain[chosen_indices, :, :]).to(dtype=torch.float32)
             batchSampledXTCN = torch.from_numpy(genImgTrainTCN[chosen_indices, :, :]).to(dtype=torch.float32)
             batchSampledDirX1 = torch.from_numpy(numpy.array(rawDataCO21gen)[chosen_indices]).to(dtype=torch.float32)
-            # batchSampledDirX2 = torch.from_numpy(numpy.array(rawDataCO22gen)[chosen_indices]).to(dtype=torch.float32)
             batchSampledDirX = torch.unsqueeze(batchSampledDirX1,dim=1)
             batchSampledLabels = torch.from_numpy(labelsOneHot[chosen_indices, :]).to(dtype=torch.float32)
-            # batchSampledX = x.gather(dim=0,index=chosen_indices)
-            # batchSampledLabels = labelsOneHot.gather(dim=0,index=chosen_indices)
             optimizer.zero_grad()
             if isRunOnCPU == False:
                 batchSampledX = batchSampledX.cuda()
@@ -286,7 +244,6 @@ class LSTM_TCN_fcn_1room:
 
         print("Test:")
         dirX1 = torch.from_numpy(numpy.array(rawDataCO21Test)).to(dtype=torch.float32)
-        # dirX2 = torch.from_numpy(numpy.array(rawDataCO22Test)).to(dtype=torch.float32)
         dirX = torch.unsqueeze(dirX1,dim=1)
         if isRunOnCPU == False:
             xTest = xTest.cuda()
@@ -295,7 +252,7 @@ class LSTM_TCN_fcn_1room:
         outputTest = model(xTest,xTestTCN,dirX)
 
         predLabelsTest = numpy.argmax(outputTest.detach().cpu().numpy(), axis=1)
-        # labelsTest = numpy.argmax(batchSampledLabels.detach().cpu().numpy(),axis=1)
+
         cmTest = confusion_matrix(labelsTest, predLabelsTest)
         print(cmTest)
         accuracyTest = accuracy_score(labelsTest, predLabelsTest)
@@ -303,8 +260,8 @@ class LSTM_TCN_fcn_1room:
 
         torch.save(model.state_dict(), 'model' + modelVersion + suffix + '.pytorch')
 
-        return accuracyTest
         # plt.plot(predLabels, label='train pred labels')
         # plt.plot(labels, label='train labels')
         # plt.legend()
         # plt.show()
+        return accuracyTest
