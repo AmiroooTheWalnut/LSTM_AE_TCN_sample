@@ -8,6 +8,7 @@ from sklearn.metrics import accuracy_score
 from torch.optim import lr_scheduler
 from pathlib import Path
 import torch.optim as optim
+from torchview import draw_graph
 
 class LSTM_TCN_fcn_1room:
     def run(self,suffix, inputFileName, genco2r1FileName, genoccr1FileName):
@@ -145,9 +146,6 @@ class LSTM_TCN_fcn_1room:
 
         genImgTrainTCN = imgBatchesRawGenTCN
 
-
-
-
         my_data = genfromtxt(inputFileName, delimiter=',', skip_header=True)
 
         counter = 0
@@ -187,14 +185,26 @@ class LSTM_TCN_fcn_1room:
         # Create model
         model = LSTMTCNAutoencoder(input_dim=feature_dim, latent_dim=latent_dim, seq_len=seq_len, num_classes=3)
 
+        input1 = torch.randn(batch_size, seq_len, 1)
+        input2 = torch.randn(batch_size, 1, seq_len)
+        input3 = torch.randn(batch_size, 1)
+        if isRunOnCPU == False:
+            model = model.cuda()
+            input1 = input1.cuda()
+            input2 = input2.cuda()
+            input3 = input3.cuda()
+        if isRunOnCPU == False:
+            graph = draw_graph(model, input_data=(input1, input2, input3), expand_nested=True, device="cuda")
+        else:
+            graph = draw_graph(model, input_data=(input1, input2, input3), expand_nested=True, device="cpu")
+        graph.visual_graph.render('model_pytorch' + modelVersion, format="png")
+
         labels = numpy.array(rawDataOcc1gen, dtype=numpy.int32)
         labels[labels > 2] = 2
         
         encoded_arr = numpy.zeros((labels.size, labels.max() + 1), dtype=int)
         encoded_arr[numpy.arange(labels.size), labels] = 1
         labelsOneHot = encoded_arr
-
-        model = LSTMTCNAutoencoder(feature_dim, latent_dim, seq_len, 3)
 
         my_file = Path('model' + modelVersion + suffix + '.pytorch')
         if my_file.is_file() and continueTrain == True:
